@@ -8,7 +8,7 @@ import {
   updateContact,
 } from "../../models/contacts.js";
 
-import { addContactsValidation, updateContactsValidation } from '../../middleware/middleware.js';
+import { addContactsValidation, updateContactsValidation } from '../../middleware/validationMiddleware.js';
 
 const router = express.Router();
 
