@@ -1,25 +1,70 @@
-const express = require("express");
+import {express} from "express";
+
+import {
+  listContacts,
+  getContactById,
+  removeContact,
+  addContact,
+  updateContact,
+} from "../../models/contacts.js";
+
+import { addContactsValidation, updateContactsValidation } from '../../middleware/middleware.js';
 
 const router = express.Router();
 
+
 router.get("/", async (req, res, next) => {
-  res.json({ message: "Home work-two done" });
+  const result = await listContacts();
+  if (result) {
+    res.json({ contacts, status: "success" });
+  } else {
+    res.status(500).json({ status: `server error` });
+  }
 });
 
 router.get("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
-});
+    const { contactId } = req.params;
+    const result = await getContactById(contactId);
+  if (!result) {
+    return res
+      .status(400)
+      .json({ status: `no contacts with id '${contactId}' found` });
+  }
+    res.json({ findToContact, status: "success" });
+ 
 
-router.post("/", async (req, res, next) => {
-  res.json({ message: "template message" });
+
+router.post("/",addContactsValidation, async (req, res, next) => {
+
+
+  const result = await addContact(req.body);
+  if (result) {
+    res.status(201).json(result);
+  } else {
+     res.status(500).json({ status: `server error` });
+  }
+ 
 });
 
 router.delete("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
+ const { contactId } = req.params;
+  const result = await removeContact(contactId);
+  if (result) {
+    res.status(201).json({ status: `contacts delete` });
+  } else {
+     res.status(500).json({ status: `server error` });
+  }
+  
 });
 
-router.put("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
+router.put("/:contactId",updateContactsValidation, async (req, res, next) => {
+const { contactId } = req.params;
+  const result = await updateContact(contactId,req.body);
+  if (result) {
+    res.json({ result, status: `success` });
+  } else {
+     res.status(500).json({ status: `server error` });
+  }
 });
 
-module.exports = router;
+export default router;
