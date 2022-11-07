@@ -38,6 +38,7 @@ export const removeContact = async (contactId) => {
     }
     await fs.writeFile(contactsPath, JSON.stringify(filterContacts), "utf8");
     console.log(`contact with ID:${contactId} has been removed`);
+    return true;
   } catch (error) {
     console.log(error.message);
   }
@@ -47,14 +48,16 @@ export const addContact = async ({ name, email, phone }) => {
   try {
     const contacts = await listContacts();
     const newContact = {
-      id: nanoid(),
+      id: nanoid(4),
       name,
       email,
       phone,
     };
     const contactsList = JSON.stringify([newContact, ...contacts], null, "\t");
+
     await fs.writeFile(contactsPath, contactsList, "utf8");
     console.log("You have added a new contact");
+    return newContact;
   } catch (error) {
     console.log(error.message);
   }
@@ -66,17 +69,15 @@ export const updateContact = async (contactId, { name, email, phone }) => {
     const indexContacts = contacts.findIndex(
       (contact) => contact.id === contactId
     );
+
     if (indexContacts < 0) {
       return null;
     }
-    contacts[indexContacts] = { contactId, name, email, phone };
-    const updateContacts = JSON.stringify(
-      [indexContacts, ...contacts],
-      null,
-      "\t"
-    );
+    contacts[indexContacts] = { id: contactId, name, email, phone };
+    const updateContacts = JSON.stringify(contacts, null, "\t");
     await fs.writeFile(contactsPath, updateContacts, "utf8");
-    console.log(`contact with ID:${id} has been update`);
+    console.log(`contact with ID:${contactId} has been update`);
+    return contacts[indexContacts];
   } catch (error) {
     console.log(error.message);
   }
