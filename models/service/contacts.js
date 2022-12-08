@@ -2,7 +2,6 @@ import { Contact } from "../schema/contactsModel.js";
 
 export const getContacts = async () => {
     const contacts = await Contact.find();
-    console.log(contacts);
     return contacts;
 };
 
