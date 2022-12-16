@@ -2,32 +2,84 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/schema/userModel.js';
+import  {emailSender}  from '../helpers/emailSender.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as url from 'url';
 import Jimp from 'jimp';
-// import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid';
+
 import {
   registerUser,
   loginUser,
   logOutUser,
   updateUser,
+  verifyUser,
 } from "../models/service/users.js";
+
 import { createError } from '../helpers/createError.js';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
+let verificationToken = '';
+
 export const register = async (req, res, next) => {
+
+    verificationToken = nanoid();
+
     const { email, password } = req.body;
 
     try {
-        const user = await registerUser(email, password);
+        const user = await registerUser(email, password, verificationToken);
+        
 
         if (!user) {
             throw createError(409, 'Email in use');
         }
+
+        await emailSender(email, verificationToken);
+
         res.status(201).json({
             user: { email: user.email, subscription: user.subscription, avatarURL: user.avatarURL, },
+        });
+    } catch (e) {
+        next(e);
+    }
+};
+
+export const verification = async (req, res, next) => {
+    const { email } = req.body;
+    const { verificationToken } = req.params;
+
+    try {
+        const user = await verifyUser(email, verificationToken);
+
+        if (!user) {
+            throw createError(404, 'User not found');
+        }
+        res.json({
+            message: 'Verification successful',
+        });
+    } catch (e) {
+        next(e);
+    }
+};
+
+export const verificationRepeatController = async (req, res, next) => {
+
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({ email, verify: true });
+
+        if (user) {
+            throw createError(400, 'Verification has already been passed');
+        }
+
+        await emailSender(email, verificationToken);
+
+        res.json({
+            message: 'Verification email sent',
         });
     } catch (e) {
         next(e);
