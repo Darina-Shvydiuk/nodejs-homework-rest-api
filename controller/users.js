@@ -1,7 +1,12 @@
 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import {User} from '../models/schema/userModel.js';
+import { User } from '../models/schema/userModel.js';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as url from 'url';
+import Jimp from 'jimp';
+// import { nanoid } from 'nanoid';
 import {
   registerUser,
   loginUser,
@@ -9,6 +14,8 @@ import {
   updateUser,
 } from "../models/service/users.js";
 import { createError } from '../helpers/createError.js';
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export const register = async (req, res, next) => {
     const { email, password } = req.body;
@@ -20,7 +27,7 @@ export const register = async (req, res, next) => {
             throw createError(409, 'Email in use');
         }
         res.status(201).json({
-            user: { email: user.email, subscription: user.subscription },
+            user: { email: user.email, subscription: user.subscription, avatarURL: user.avatarURL, },
         });
     } catch (e) {
         next(e);
@@ -85,6 +92,7 @@ export const getCurrentUser = async (req, res, next) => {
         user: {
             email: req.user.email,
             subscription: req.user.subscription,
+            avatarURL: req.user.avatarURL,
         },
     });
 };
@@ -104,10 +112,28 @@ export const updateStatus = async (req, res, next) => {
     }
 };
 
-export const controller = {
-    register,
-    login,
-    logOut,
-    getCurrentUser,
-    updateStatus,
+export const updateUserAvatar = async (req, res, next) => {
+    const userId = req.user._id;
+    const { originalname, path: tempPath } = req.file;
+    const newName = `${userId + '-' + originalname}`;
+    const newPath = path.join(__dirname, '../public/avatars', newName);
+    const avatarURL = `http://localhost:${process.env.PORT}/api/avatars/${newName}`;
+
+    try {
+        const img = await Jimp.read(tempPath);
+        img.resize(250, 250);
+        img.write(tempPath);
+
+        await fs.rename(tempPath, newPath);
+
+        await User.findOneAndUpdate({ email: req.user.email }, { avatarURL });
+
+        res.json({
+            avatarURL: avatarURL,
+        });
+    } catch (e) {
+        await fs.unlink(tempPath);
+        next(e);
+    }
 };
+

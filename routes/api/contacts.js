@@ -16,8 +16,11 @@ import {
 } from "../../middleware/validationMiddleware.js";
 
 import { asyncWrapper } from "../../helpers/apiHelpers.js";
+import { authMiddleware } from '../../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 router.get("/", asyncWrapper(getContactsControllers));
 
