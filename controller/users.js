@@ -90,7 +90,7 @@ export const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOne({ email }, 'password');
+        const user = await User.findOne({ email ,verify: true}, 'password');
 
         if (!user) {
             throw createError(404, 'User not found');
