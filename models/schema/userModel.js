@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from 'bcrypt';
+import gravatar from 'gravatar';
 
 const user = new mongoose.Schema({
   password: {
@@ -16,7 +17,14 @@ const user = new mongoose.Schema({
     enum: ["starter", "pro", "business"],
     default: "starter"
   },
-  token: String,
+  avatarURL: {
+    type: String,
+  },
+  token: {
+    type: String,
+    default:null,
+  }
+  
 });
 
 user.methods.setPassword = async function (password) {
@@ -28,6 +36,9 @@ user.methods.setPassword = async function (password) {
 
 user.methods.checkPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
+};
+user.methods.setAvatarUrl = function (email) {
+  this.avatarURL = gravatar.url(email, { protocol: "http" });
 };
 
 export const User = mongoose.model("users", user);
