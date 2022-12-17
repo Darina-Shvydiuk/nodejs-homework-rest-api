@@ -2,43 +2,89 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/schema/userModel.js';
+import  {emailSender}  from '../helpers/emailSender.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as url from 'url';
 import Jimp from 'jimp';
-// import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid';
+
 import {
   registerUser,
   loginUser,
   logOutUser,
   updateUser,
+  verifyUser,
 } from "../models/service/users.js";
+
 import { createError } from '../helpers/createError.js';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
+let verificationToken = '';
+
 export const register = async (req, res, next) => {
+
+    verificationToken = nanoid();
+
     const { email, password } = req.body;
 
-    try {
-        const user = await registerUser(email, password);
+   
+        const user = await registerUser(email, password, verificationToken);
+        
 
         if (!user) {
             throw createError(409, 'Email in use');
         }
+
+        await emailSender(email, verificationToken);
+
         res.status(201).json({
             user: { email: user.email, subscription: user.subscription, avatarURL: user.avatarURL, },
         });
-    } catch (e) {
-        next(e);
-    }
+   
+};
+
+export const verification = async (req, res, next) => {
+    const { email } = req.body;
+    const { verificationToken } = req.params;
+
+   
+        const user = await verifyUser(email, verificationToken);
+
+        if (!user) {
+            throw createError(404, 'User not found');
+        }
+        res.json({
+            message: 'Verification successful',
+        });
+   
+};
+
+export const verificationRepeatController = async (req, res, next) => {
+
+    const { email } = req.body;
+
+   
+        const user = await User.findOne({ email, verify: true });
+
+        if (user) {
+            throw createError(400, 'Verification has already been passed');
+        }
+
+        await emailSender(email, verificationToken);
+
+        res.json({
+            message: 'Verification email sent',
+        });
+    
 };
 
 export const login = async (req, res, next) => {
     const { email, password } = req.body;
 
-    try {
-        const user = await User.findOne({ email }, 'password');
+   
+        const user = await User.findOne({ email ,verify: true}, 'password');
 
         if (!user) {
             throw createError(404, 'User not found');
@@ -65,15 +111,13 @@ export const login = async (req, res, next) => {
                 subscription: loginedUser.subscription,
             },
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const logOut = async (req, res, next) => {
     const { _id } = req.user;
 
-    try {
+    
         const user = await logOutUser(_id);
 
         if (!user) {
@@ -82,9 +126,7 @@ export const logOut = async (req, res, next) => {
         res.status(204).json({
             message: 'success',
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const getCurrentUser = async (req, res, next) => {
@@ -99,7 +141,7 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const updateStatus = async (req, res, next) => {
     const { _id } = req.user;
-    try {
+   
         const user = await updateUser(_id, req.body);
         res.json({
             user: {
@@ -107,9 +149,7 @@ export const updateStatus = async (req, res, next) => {
                 subscription: user.subscription,
             },
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const updateUserAvatar = async (req, res, next) => {
