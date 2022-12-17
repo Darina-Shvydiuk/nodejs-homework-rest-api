@@ -41,6 +41,6 @@ router.use(authMiddleware);
 router.post('/logout', asyncWrapper(logOut));
 router.get('/current', asyncWrapper(getCurrentUser));
 router.patch('/', updateUserStatus, asyncWrapper(updateStatus));
-router.patch('/avatars', upload.single('avatar'), asyncWrapper(updateUserAvatar));
+router.patch('/avatars', upload.single('avatar'), updateUserAvatar);
 
 export default router;

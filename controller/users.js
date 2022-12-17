@@ -29,7 +29,7 @@ export const register = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    try {
+   
         const user = await registerUser(email, password, verificationToken);
         
 
@@ -42,16 +42,14 @@ export const register = async (req, res, next) => {
         res.status(201).json({
             user: { email: user.email, subscription: user.subscription, avatarURL: user.avatarURL, },
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const verification = async (req, res, next) => {
     const { email } = req.body;
     const { verificationToken } = req.params;
 
-    try {
+   
         const user = await verifyUser(email, verificationToken);
 
         if (!user) {
@@ -60,16 +58,14 @@ export const verification = async (req, res, next) => {
         res.json({
             message: 'Verification successful',
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const verificationRepeatController = async (req, res, next) => {
 
     const { email } = req.body;
 
-    try {
+   
         const user = await User.findOne({ email, verify: true });
 
         if (user) {
@@ -81,15 +77,13 @@ export const verificationRepeatController = async (req, res, next) => {
         res.json({
             message: 'Verification email sent',
         });
-    } catch (e) {
-        next(e);
-    }
+    
 };
 
 export const login = async (req, res, next) => {
     const { email, password } = req.body;
 
-    try {
+   
         const user = await User.findOne({ email ,verify: true}, 'password');
 
         if (!user) {
@@ -117,15 +111,13 @@ export const login = async (req, res, next) => {
                 subscription: loginedUser.subscription,
             },
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const logOut = async (req, res, next) => {
     const { _id } = req.user;
 
-    try {
+    
         const user = await logOutUser(_id);
 
         if (!user) {
@@ -134,9 +126,7 @@ export const logOut = async (req, res, next) => {
         res.status(204).json({
             message: 'success',
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const getCurrentUser = async (req, res, next) => {
@@ -151,7 +141,7 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const updateStatus = async (req, res, next) => {
     const { _id } = req.user;
-    try {
+   
         const user = await updateUser(_id, req.body);
         res.json({
             user: {
@@ -159,9 +149,7 @@ export const updateStatus = async (req, res, next) => {
                 subscription: user.subscription,
             },
         });
-    } catch (e) {
-        next(e);
-    }
+   
 };
 
 export const updateUserAvatar = async (req, res, next) => {
